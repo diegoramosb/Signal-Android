@@ -222,6 +222,7 @@ import org.thoughtcrime.securesms.util.task.InitializeSecurityAsyncTask;
 import org.thoughtcrime.securesms.util.task.InitializeMmsEnabledAsyncCheckAsyncTask;
 import org.thoughtcrime.securesms.util.task.MuteRecipientAsyncTask;
 import org.thoughtcrime.securesms.util.task.ResetSecureSessionAsyncTask;
+import org.thoughtcrime.securesms.util.task.SaveDraftAsyncTask;
 import org.thoughtcrime.securesms.util.task.SendMessageAsyncTask;
 import org.thoughtcrime.securesms.util.task.UnblockRecipientAsyncTask;
 import org.thoughtcrime.securesms.util.views.Stub;
@@ -1979,34 +1980,36 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     final long thisThreadId = this.threadId;
     final int thisDistributionType = this.distributionType;
 
-    new AsyncTask<Long, Void, Long>() {
-      @Override
-      protected Long doInBackground(Long... params) {
-        ThreadDatabase threadDatabase = DatabaseFactory.getThreadDatabase(ConversationActivity.this);
-        DraftDatabase draftDatabase = DatabaseFactory.getDraftDatabase(ConversationActivity.this);
-        long threadId = params[0];
-
-        if (drafts.size() > 0) {
-          if (threadId == -1)
-            threadId = threadDatabase.getThreadIdFor(getRecipient(), thisDistributionType);
-
-          draftDatabase.insertDrafts(threadId, drafts);
-          threadDatabase.updateSnippet(threadId, drafts.getSnippet(ConversationActivity.this),
-                  drafts.getUriSnippet(),
-                  System.currentTimeMillis(), Types.BASE_DRAFT_TYPE, true);
-        } else if (threadId > 0) {
-          threadDatabase.update(threadId, false);
-        }
-
-        return threadId;
-      }
-
-      @Override
-      protected void onPostExecute(Long result) {
-        future.set(result);
-      }
-
-    }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, thisThreadId);
+    SaveDraftAsyncTask task = new SaveDraftAsyncTask(new WeakReference<>(ConversationActivity.this), new WeakReference<>(this), getRecipient(), thisDistributionType, drafts, future);
+    task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, thisThreadId);
+//    new AsyncTask<Long, Void, Long>() {
+//      @Override
+//      protected Long doInBackground(Long... params) {
+//        ThreadDatabase threadDatabase = DatabaseFactory.getThreadDatabase(ConversationActivity.this);
+//        DraftDatabase draftDatabase = DatabaseFactory.getDraftDatabase(ConversationActivity.this);
+//        long threadId = params[0];
+//
+//        if (drafts.size() > 0) {
+//          if (threadId == -1)
+//            threadId = threadDatabase.getThreadIdFor(getRecipient(), thisDistributionType);
+//
+//          draftDatabase.insertDrafts(threadId, drafts);
+//          threadDatabase.updateSnippet(threadId, drafts.getSnippet(ConversationActivity.this),
+//                  drafts.getUriSnippet(),
+//                  System.currentTimeMillis(), Types.BASE_DRAFT_TYPE, true);
+//        } else if (threadId > 0) {
+//          threadDatabase.update(threadId, false);
+//        }
+//
+//        return threadId;
+//      }
+//
+//      @Override
+//      protected void onPostExecute(Long result) {
+//        future.set(result);
+//      }
+//
+//    }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, thisThreadId);
 
     return future;
   }
