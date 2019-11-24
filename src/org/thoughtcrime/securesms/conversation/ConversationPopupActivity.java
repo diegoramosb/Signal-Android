@@ -110,7 +110,7 @@ public class ConversationPopupActivity extends ConversationActivity {
   }
 
   @Override
-  protected void sendComplete(long threadId) {
+  public void sendComplete(long threadId) {
     super.sendComplete(threadId);
     finish();
   }
